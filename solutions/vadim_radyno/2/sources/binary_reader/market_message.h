@@ -11,7 +11,7 @@ namespace binary_reader
 {
     class market_message : virtual protected boost::noncopyable
     {
-        typedef std::vector<char> tMessage;
+        static const boost::uint32_t ms_time_delay = 2;
         enum class  eMarketType 
         {
             BEGIN = 1u,
@@ -25,7 +25,7 @@ namespace binary_reader
         boost::uint32_t   m_type;
         boost::uint32_t   m_time;
         boost::uint32_t   m_len;
-        tMessage          m_msg;
+        char* m_msg;
 
     public:
         explicit market_message( std::ifstream& _in );

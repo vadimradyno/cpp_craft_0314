@@ -2,8 +2,6 @@
 #include <string>
 
 #include "market_message.h"
-#include <list>
-#include <deque>
 #include <xutility>
 #include <iostream>
 
@@ -15,12 +13,6 @@ namespace Constants
     {
         const string input_file = BINARY_DIR "/input.txt";
         const string output_file = BINARY_DIR "/output.txt";
-    }
-
-    namespace Results
-    {
-        const string good = "YES";
-        const string bad  = "NO";
     }
 }
 
@@ -43,7 +35,7 @@ int main()
 
         if (message.isValidTime(max_time) && message.isValidType())
         {
-            //cout << message.type() << " " << message.time() << " " << strlen(message.msg()) << " " << message.msg() << endl;
+            cout << message.type() << " " << message.time() << " " << strlen(message.msg()) << " " << message.msg() << endl;
             max_time = std::max<boost::int32_t>(message.time(), max_time);
             message.write(output_file);
         }
