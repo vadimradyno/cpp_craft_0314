@@ -22,7 +22,6 @@ namespace Constants
     namespace Paths
     {
         const string input_file = BINARY_DIR "/input_";
-
         const string output_file = BINARY_DIR "/output_";
     }
 
@@ -102,7 +101,7 @@ int main()
     for( size_t i = 1; i <= Constants::count_files; ++i )
     {
         processor_messages.emplace_back(i);
-        group_of_slave_threads.create_thread( boost::bind( &cProcessorMessage::process, processor_messages[i - 1] ) );
+        group_of_slave_threads.create_thread( boost::bind( &cProcessorMessage::process, &processor_messages[i - 1] ) );
     }
 
     group_of_slave_threads.join_all();

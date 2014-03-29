@@ -20,15 +20,18 @@ int main()
         return -1;
     }
 
-    std::ofstream output_file(Constants::Paths::output_file, std::ios::out | std::ios::binary);
+    boost::thread_group group_of_slave_threads;
 
+    binary_reader::cProtectedMessageWriter protected_message_writer;
+
+    deque<binary_reader::stock_data> messages;
     while (!input_file.eof())
     {
-        binary_reader::stock_data message(input_file);
-        message.write(output_file);
+        messages.emplace_back(input_file);
+        binary_reader::stock_data& message = messages[messages.size() - 1];
+        group_of_slave_threads.create_thread(boost::bind( &binary_reader::cProtectedMessageWriter::write, &protected_message_writer, &message));
     }
-
-    output_file.close();
     input_file.close();
+    group_of_slave_threads.join_all();
 }
 
