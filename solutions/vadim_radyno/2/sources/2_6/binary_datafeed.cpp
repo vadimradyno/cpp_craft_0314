@@ -22,13 +22,22 @@ int main()
 
     std::ofstream output_file(Constants::Paths::output_file, std::ios::out | std::ios::binary);
 
-    while (!input_file.eof())
+    try
     {
-        binary_reader::stock_data message(input_file);
-        message.write(output_file);
+        while (!input_file.eof())
+        {
+            binary_reader::stock_data message(input_file);
+            message.write(output_file);
+        }
+    }
+    catch(const char* _error)
+    {
+
     }
 
     output_file.close();
     input_file.close();
+
+    return 0;
 }
 

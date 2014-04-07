@@ -3,7 +3,6 @@
 #include <deque>
 #include <set>
 #include <map>
-#include <utility>
 #include <algorithm>
 #include <iostream>
 
@@ -16,22 +15,26 @@ namespace Constants
         const string input_file = BINARY_DIR "/input.txt";
         const string output_file = BINARY_DIR "/output.txt";
     }
+    const boost::int32_t max_message_size = 2048;
 }
 
 typedef set<boost::uint32_t> tSeconds;
+typedef map<boost::uint32_t, boost::uint32_t> tSecondAndSize;
+
+
 
 struct sMessagesAttributies
 {
-    sMessagesAttributies(const boost::uint32_t _type)
-        : m_type(_type)
-        , m_count(0)
+    sMessagesAttributies()
+        : m_count(0)
     { }
 
-    boost::uint32_t  m_type;
     boost::uint32_t  m_count;
-    tSeconds         m_seconds;
+    tSecondAndSize   m_seconds_and_message_size;
 };
-typedef deque<sMessagesAttributies> tAttributies;
+
+typedef boost::uint32_t tTypeMessage;
+typedef map<tTypeMessage, sMessagesAttributies> tAttributies;
 
 int main()
 {
@@ -52,39 +55,30 @@ int main()
             continue;
         }
 
-        auto predicat = [&message](const sMessagesAttributies& attr)->bool
-        {
-            return message.type() == attr.m_type;
-        };
+        sMessagesAttributies& message_attributies = attrs[message.type()];
 
-        tAttributies::iterator it = find_if(attrs.begin(), attrs.end(), predicat);
+        const boost::uint32_t new_message_size = message_attributies.m_seconds_and_message_size[message.time()] + message.size();
 
-        if (it == attrs.end())
+        if (new_message_size <= Constants::max_message_size)
         {
-            attrs.emplace_back(message.type());
+            message_attributies.m_seconds_and_message_size[message.time()] = new_message_size;
+
+            ++message_attributies.m_count;
         }
-
-        it = find_if(attrs.begin(), attrs.end(), predicat);
-
-        (*it).m_seconds.insert(message.time());
-        ++(*it).m_count;
     }
 
     input_file.close();
 
     std::ofstream output_file(Constants::Paths::output_file, std::ios::out | std::ios::binary);
-
-    for (sMessagesAttributies& attr : attrs)
+    
+    for (const auto& attr : attrs)
     {
-        output_file.write(reinterpret_cast<char*>(&(attr.m_type)), sizeof(attr.m_type));
+        output_file.write(reinterpret_cast<const char*>(&(attr.first)), sizeof(attr.first));
 
-        double mean = static_cast<double>(attr.m_count) / static_cast<double>(attr.m_seconds.size());
-        output_file.write(reinterpret_cast<char*>(&(mean)), sizeof(mean));
-
-        cout << attr.m_type << " " << mean << endl;
+        const double mean = static_cast<double>(attr.second.m_count) / static_cast<double>(attr.second.m_seconds_and_message_size.size());
+        output_file.write(reinterpret_cast<const char*>(&(mean)), sizeof(mean));
     }
 
     output_file.close();
 
 }
-

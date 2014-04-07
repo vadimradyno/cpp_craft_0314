@@ -40,7 +40,7 @@ namespace binary_reader
             const double f3,
             const double f4 );		
         ~stock_data();
-        //
+
         void write( std::ofstream& out );
         void write_raw( std::ofstream& out );
 

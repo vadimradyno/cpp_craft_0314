@@ -35,7 +35,6 @@ int main()
 
         if (message.isValidTime(max_time) && message.isValidType())
         {
-            cout << message.type() << " " << message.time() << " " << strlen(message.msg()) << " " << message.msg() << endl;
             max_time = std::max<boost::int32_t>(message.time(), max_time);
             message.write(output_file);
         }

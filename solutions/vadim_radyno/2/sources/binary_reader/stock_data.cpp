@@ -12,7 +12,10 @@ binary_reader::stock_data::stock_data( std::ifstream& _in )
 {
     readArray<char>(_in, m_stock_name_, ms_stock_name_max_size);
     readArray<char>(_in, m_date_time_, ms_data_time_size);
-
+    if (_in.eof())
+    {
+        throw "empty file";
+    }
     m_price_ = readValue<double>(_in);
     m_vwap_ = readValue<double>(_in);
     m_volume_ = readValue<boost::uint32_t>(_in);
@@ -21,7 +24,7 @@ binary_reader::stock_data::stock_data( std::ifstream& _in )
     m_f2_ = readValue<double>(_in);
     m_f3_ = readValue<double>(_in);
     m_f4_ = readValue<double>(_in);
-}
+ }
 
 
 binary_reader::stock_data::stock_data( const char* _stock_name,
@@ -43,25 +46,28 @@ binary_reader::stock_data::stock_data( const char* _stock_name,
     , m_f3_(_f3)
     , m_f4_(_f4)
 {
-    const boost::uint32_t date_time_size = std::min<boost::uint32_t>(static_cast<boost::uint32_t>(strlen(_date_time)), ms_data_time_size);
-    strncpy(m_date_time_, _date_time, date_time_size);
-
-    const boost::uint32_t stock_name_size = std::min<boost::uint32_t>(static_cast<boost::uint32_t>(strlen(_stock_name)), ms_stock_name_max_size);
-    strncpy(m_stock_name_, _stock_name, stock_name_size);
+    memmove( m_stock_name_, _stock_name, sizeof( _stock_name ) );
+    memmove( m_date_time_, _date_time, sizeof( _stock_name ) );
 }
-
 
 binary_reader::stock_data::~stock_data()
 {
 	
 }
 
+template< class T >
+void write_binary( std::ofstream& out, T& t, const size_t len = sizeof( T ) )
+{
+    out.write( reinterpret_cast< const char* >( &t ), len );
+}
 
 void binary_reader::stock_data::write( std::ofstream& out )
 {
-    std::string new_stock_name(m_stock_name_);
-    new_stock_name.resize(ms_new_stock_name_max_size);
-    out.write(new_stock_name.c_str(), ms_new_stock_name_max_size);
+    char stock_name[ms_new_stock_name_max_size];
+    memset(stock_name, 0, sizeof(stock_name));
+    memmove( stock_name, m_stock_name_, sizeof( m_stock_name_ ) );
+
+    out.write(stock_name, ms_new_stock_name_max_size);
 
     const boost::uint32_t count_day = getCountDay();
     out.write(reinterpret_cast<const char*>(&count_day), sizeof(count_day));
