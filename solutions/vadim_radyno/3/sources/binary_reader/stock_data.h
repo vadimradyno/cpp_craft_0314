@@ -41,8 +41,9 @@ namespace binary_reader
             const double f4 );		
         ~stock_data();
 
-        void write( std::ofstream& out );
+        void write( std::ofstream& out ) const;
         void write_raw( std::ofstream& out );
+        const char* getStockName() const { return m_stock_name_; }
 
     private:
         template<typename T> T readValue(std::ifstream& _in)

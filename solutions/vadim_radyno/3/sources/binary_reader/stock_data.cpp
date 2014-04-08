@@ -24,8 +24,7 @@ binary_reader::stock_data::stock_data( std::ifstream& _in )
     m_f2_ = readValue<double>(_in);
     m_f3_ = readValue<double>(_in);
     m_f4_ = readValue<double>(_in);
- }
-
+}
 
 binary_reader::stock_data::stock_data( const char* _stock_name,
                                       const char* _date_time,
@@ -52,11 +51,11 @@ binary_reader::stock_data::stock_data( const char* _stock_name,
 
 binary_reader::stock_data::~stock_data()
 {
-	
+
 }
 
 
-void binary_reader::stock_data::write( std::ofstream& out )
+void binary_reader::stock_data::write( std::ofstream& out ) const
 {
     char stock_name[ms_new_stock_name_max_size];
     memset(stock_name, 0, sizeof(stock_name));
@@ -67,11 +66,11 @@ void binary_reader::stock_data::write( std::ofstream& out )
     const boost::uint32_t count_day = getCountDay();
     out.write(reinterpret_cast<const char*>(&count_day), sizeof(count_day));
 
-    out.write(reinterpret_cast<char*>(&m_vwap_), sizeof(m_vwap_));
+    out.write(reinterpret_cast<const char*>(&m_vwap_), sizeof(m_vwap_));
 
-    out.write(reinterpret_cast<char*>(&m_volume_), sizeof(m_volume_));
+    out.write(reinterpret_cast<const char*>(&m_volume_), sizeof(m_volume_));
 
-    out.write(reinterpret_cast<char*>(&m_f2_), sizeof(m_f2_));
+    out.write(reinterpret_cast<const char*>(&m_f2_), sizeof(m_f2_));
 }
 
 
@@ -90,4 +89,5 @@ boost::uint32_t binary_reader::stock_data::getCountDay() const
 
     return (year - 1) * ms_count_days_in_year + (month - 1) * ms_count_days_im_month + day;
 }
+
 
