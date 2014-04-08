@@ -3,7 +3,6 @@
 #include <deque>
 #include <set>
 #include <map>
-#include <utility>
 #include <algorithm>
 #include <iostream>
 #include <boost/thread.hpp>
@@ -23,24 +22,24 @@ namespace Constants
     }
 
     const int count_files = 999;
+    const boost::int32_t max_message_size = 2048;
 }
 
 typedef set<boost::uint32_t> tSeconds;
+typedef map<boost::uint32_t, boost::uint32_t> tSecondAndSize;
 
 struct sMessagesAttributies
 {
-    sMessagesAttributies(const boost::uint32_t _type)
-        : m_type(_type)
-        , m_count(0)
+    sMessagesAttributies()
+        : m_count(0)
     { }
 
-    boost::uint32_t  m_type;
     boost::uint32_t  m_count;
-    tSeconds         m_seconds;
+    tSecondAndSize   m_seconds_and_message_size;
 };
 
-
-typedef deque<sMessagesAttributies> tAttributies;
+typedef boost::uint32_t tTypeMessage;
+typedef map<tTypeMessage, sMessagesAttributies> tAttributies;
 
 
 class cMessagesReader final
@@ -61,15 +60,15 @@ public:
     void write()
     {
         std::ofstream output_file(Constants::Paths::output_file, std::ios::out | std::ios::binary);
-        
-        for (sMessagesAttributies& attr : m_attrs)
+
+        for (const auto& attr : m_attrs)
         {
-            output_file.write(reinterpret_cast<char*>(&(attr.m_type)), sizeof(attr.m_type));
-            
-            double mean = static_cast<double>(attr.m_count) / static_cast<double>(attr.m_seconds.size());
-            output_file.write(reinterpret_cast<char*>(&(mean)), sizeof(mean));
+            output_file.write(reinterpret_cast<const char*>(&(attr.first)), sizeof(attr.first));
+
+            const double mean = static_cast<double>(attr.second.m_count) / static_cast<double>(attr.second.m_seconds_and_message_size.size());
+            output_file.write(reinterpret_cast<const char*>(&(mean)), sizeof(mean));
         }
-        
+
         output_file.close();
     }
 
@@ -94,30 +93,18 @@ private:
                 continue;
             }
 
-            auto predicat = [&message](const sMessagesAttributies& attr)->bool
-            {
-                return message.type() == attr.m_type;
-            };
-
-            sMessagesAttributies* message_attribute = nullptr;
-
             boost::mutex::scoped_lock lock(m_wait);
 
-            tAttributies::iterator it = find_if(m_attrs.begin(), m_attrs.end(), predicat);
+            sMessagesAttributies& message_attributies = m_attrs[message.type()];
 
-            if (it == m_attrs.end())
-            {
-                m_attrs.emplace_back(message.type());
-                message_attribute = &(m_attrs[m_attrs.size() - 1]);
-            }
-            else
-            {
-                it = find_if(m_attrs.begin(), m_attrs.end(), predicat);
-                message_attribute = &(*it);
-            }
+            const boost::uint32_t new_message_size = message_attributies.m_seconds_and_message_size[message.time()] + message.size();
 
-            (*message_attribute).m_seconds.insert(message.time());
-            ++(*message_attribute).m_count;
+            if (new_message_size <= Constants::max_message_size)
+            {
+                message_attributies.m_seconds_and_message_size[message.time()] = new_message_size;
+
+                ++message_attributies.m_count;
+            }
         }
 
         input_file.close();

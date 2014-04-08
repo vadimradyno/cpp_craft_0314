@@ -5,29 +5,9 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/cstdint.hpp>
-#include <deque>
-#include <string>
-#include <boost/thread.hpp>
-#include <map>
-#include <memory>
 
 namespace binary_reader
 {
-    class stock_data;
-
-    class cProtectedMessageWriter final
-    {
-        typedef std::unique_ptr<boost::mutex> tMutexPtr;
-        typedef std::map<std::string, tMutexPtr> tFilesLocker;
-
-    public:
-        void write(stock_data* _stock_data);
-
-    private:
-        boost::mutex m_wait_files_locker;
-        tFilesLocker m_files_locker;
-    };
-
     class stock_data : virtual protected boost::noncopyable
     {
         static const int ms_stock_name_max_size = 8;
@@ -47,8 +27,6 @@ namespace binary_reader
         double          m_f3_;
         double          m_f4_;
 
-        cProtectedMessageWriter m_protected_message_writer;
-
     public:
         explicit stock_data( std::ifstream& in );
         explicit stock_data( const char* stock_name,
@@ -62,10 +40,9 @@ namespace binary_reader
             const double f3,
             const double f4 );		
         ~stock_data();
-        //
+
         void write( std::ofstream& out );
         void write_raw( std::ofstream& out );
-        const char* getStockName() const { return m_stock_name_; }
 
     private:
         template<typename T> T readValue(std::ifstream& _in)

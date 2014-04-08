@@ -36,6 +36,10 @@ namespace binary_reader
         boost::uint32_t type() const;
         boost::uint32_t time() const;
         const char* const msg() const;
+        boost::uint32_t size() const 
+        {
+            return sizeof(m_type) + sizeof(m_time) + sizeof(m_len) + m_len;
+        }
 
         bool isValidType() const;
         bool isValidTime( const boost::uint32_t _max_time );
