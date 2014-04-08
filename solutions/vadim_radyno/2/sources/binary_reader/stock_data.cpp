@@ -55,11 +55,6 @@ binary_reader::stock_data::~stock_data()
 	
 }
 
-template< class T >
-void write_binary( std::ofstream& out, T& t, const size_t len = sizeof( T ) )
-{
-    out.write( reinterpret_cast< const char* >( &t ), len );
-}
 
 void binary_reader::stock_data::write( std::ofstream& out )
 {
