@@ -30,7 +30,7 @@ int main()
             message.write(output_file);
         }
     }
-    catch(const char* _error)
+    catch(...)
     {
 
     }

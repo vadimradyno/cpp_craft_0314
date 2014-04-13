@@ -73,8 +73,3 @@ bool binary_reader::market_message::isValidType() const
     return false;
 }
 
-
-bool binary_reader::market_message::isValidTime( const boost::uint32_t _max_time )
-{
-    return time() + ms_time_delay > _max_time;
-}

@@ -14,8 +14,9 @@ binary_reader::stock_data::stock_data( std::ifstream& _in )
     readArray<char>(_in, m_date_time_, ms_data_time_size);
     if (_in.eof())
     {
-        throw "empty file";
+        throw std::exception("empty file");
     }
+
     m_price_ = readValue<double>(_in);
     m_vwap_ = readValue<double>(_in);
     m_volume_ = readValue<boost::uint32_t>(_in);
@@ -55,6 +56,19 @@ binary_reader::stock_data::~stock_data()
 	
 }
 
+boost::uint32_t getCountDayFromStringTime( const char *_date_time) 
+{
+    static const boost::uint32_t count_days_in_year = 372;
+    static const boost::uint32_t count_days_im_month = 31;
+
+    uint32_t year = 0, month = 0, day = 0;
+
+    sscanf_s( _date_time, "%4d%2d%2d" ,&year ,&month ,&day );
+
+    return (year - 1) * count_days_in_year + (month - 1) * count_days_im_month + day;
+}
+
+
 
 void binary_reader::stock_data::write( std::ofstream& out )
 {
@@ -64,7 +78,7 @@ void binary_reader::stock_data::write( std::ofstream& out )
 
     out.write(stock_name, ms_new_stock_name_max_size);
 
-    const boost::uint32_t count_day = getCountDay();
+    const boost::uint32_t count_day = getCountDayFromStringTime(m_date_time_);
     out.write(reinterpret_cast<const char*>(&count_day), sizeof(count_day));
 
     out.write(reinterpret_cast<char*>(&m_vwap_), sizeof(m_vwap_));
@@ -79,15 +93,5 @@ void binary_reader::stock_data::write_raw( std::ofstream& out )
 {	
 	// your code. Can be emty
 	// this method is used for testing. It writes data to the binary file without convertion.
-}
-
-
-boost::uint32_t binary_reader::stock_data::getCountDay() const
-{
-    uint32_t year = 0, month = 0, day = 0;
-
-    sscanf_s( m_date_time_, "%4d%2d%2d" ,&year ,&month ,&day );
-
-    return (year - 1) * ms_count_days_in_year + (month - 1) * ms_count_days_im_month + day;
 }
 

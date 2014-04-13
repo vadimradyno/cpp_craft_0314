@@ -13,8 +13,6 @@ namespace binary_reader
         static const int ms_stock_name_max_size = 8;
         static const int ms_data_time_size  = 8;
         static const int ms_new_stock_name_max_size = 9;
-        static const boost::uint32_t ms_count_days_in_year = 372;
-        static const boost::uint32_t ms_count_days_im_month = 31;
 
         char            m_stock_name_[ms_stock_name_max_size];
         char            m_date_time_[ms_data_time_size];

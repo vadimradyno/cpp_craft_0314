@@ -11,7 +11,6 @@ namespace binary_reader
 {
     class market_message : virtual protected boost::noncopyable
     {
-        static const boost::uint32_t ms_time_delay = 2;
         enum class  eMarketType 
         {
             BEGIN = 1u,
@@ -42,7 +41,6 @@ namespace binary_reader
         }
 
         bool isValidType() const;
-        bool isValidTime( const boost::uint32_t _max_time );
 
     private:
         template<typename T> T readValue(std::ifstream& _in)
