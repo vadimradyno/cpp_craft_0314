@@ -5,6 +5,11 @@
 namespace task5_5
 {
 	void instantiation_test();
+
+    template< typename T >
+    size_t task5_5::vector<T>::ms_start_capacity = 4;
+    template< typename T >
+    size_t task5_5::vector<T>::ms_capacity_coefficient = 2;
 }
 
 void task5_5::instantiation_test()
