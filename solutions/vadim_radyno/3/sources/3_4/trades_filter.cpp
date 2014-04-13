@@ -6,6 +6,7 @@
 #include <sstream>
 #include <set>
 #include <boost/thread.hpp>
+#include <boost/thread/condition.hpp>
 
 using namespace std;
 
@@ -13,90 +14,126 @@ namespace Constants
 {
     namespace Paths
     {
-        const string input_file = BINARY_DIR "/input_";
-        const string output_file = BINARY_DIR "/output_";
+        const string begin_input_file_name = BINARY_DIR "/input_";
+        const string begin_output_file_name = BINARY_DIR "/output_";
     }
 
     const int count_files = 999;
+    const int index_size = 4;
+}
+
+bool isValidTimeForMessage(const boost::uint32_t _max_time, const binary_reader::market_message& _message)
+{
+    static const boost::uint32_t time_delay = 2;
+
+    return time_delay + _message.time() > _max_time;
+}
+
+string getPathToFileByIndex(const string& _begin_path, const int _index)
+{
+    std::stringstream file_name;
+    file_name << _begin_path;
+
+    std::string input, output;
+    char index_str[Constants::index_size];
+    sprintf_s( index_str, Constants::index_size, "%03d", _index );
+    file_name << index_str << ".txt";
+
+    return file_name.str() ; 
 }
 
 class cProcessorMessage final
 {
-public:
-    cProcessorMessage (const int _message_index)
-        : m_message_index(_message_index)
-    {}
+    typedef deque<int> tIndexFiles;
 
+public:
+    cProcessorMessage (const int _count_files)
+        : m_is_run_threads(true)
+        , m_file_counter(_count_files)
+    {
+        for (int i = 0; i < ms_count_thread; ++i)
+        {
+            m_group_of_slave_threads.create_thread(boost::bind( &cProcessorMessage::process, this));
+        }
+    }
+
+    void stopAndWaitThread()
+    {
+        m_is_run_threads = false;
+        m_group_of_slave_threads.join_all();
+    }
+
+private:
     void process()
     {
-        const string& input_file_name = getPathToFileByIndex(Constants::Paths::input_file);
-        std::ifstream input_file(input_file_name, std::ios::in | ios::binary);
-
-        if (!input_file.is_open())
+        while (true)
         {
-            return;
-        }
+            boost::mutex::scoped_lock files_lock(m_wait_files);
 
-        const string& output_file_name = getPathToFileByIndex(Constants::Paths::output_file);
-        std::ofstream output_file(output_file_name, std::ios::out | std::ios::binary);
-
-        boost::int32_t max_time = 0;
-
-        while (!input_file.eof())
-        {
-            binary_reader::market_message message(input_file);
-
-            if (message.isValidTime(max_time) && message.isValidType())
+            if (m_file_counter != 0)
             {
-                max_time = std::max<boost::int32_t>(message.time(), max_time);
-                message.write(output_file);
+                const int index_of_file = m_file_counter--;
+
+                files_lock.unlock();
+
+                const string& input_file_name = getPathToFileByIndex(Constants::Paths::begin_input_file_name, index_of_file);
+                std::ifstream input_file(input_file_name, std::ios::in | ios::binary);
+
+                if (!input_file.is_open())
+                {
+                    return;
+                }
+
+                const string& output_file_name = getPathToFileByIndex(Constants::Paths::begin_output_file_name, index_of_file);
+                std::ofstream output_file(output_file_name, std::ios::out | std::ios::binary);
+
+                boost::uint32_t max_time = 0;
+
+                while (!input_file.eof())
+                {
+                    binary_reader::market_message message(input_file);
+
+                    if (isValidTimeForMessage(max_time, message))
+                    {
+                        max_time = std::max<boost::int32_t>(message.time(), max_time);
+                        message.write(output_file);
+                    }
+                }
+
+                output_file.close();
+                input_file.close();
+            }
+            else
+            {
+                return;
             }
         }
-
-        output_file.close();
-        input_file.close();
     }
 
 private:
-    string getPathToFileByIndex(const string& _begin_path)
-    {
-        std::stringstream file_name;
-        file_name << _begin_path;
+    boost::thread_group m_group_of_slave_threads;
+    boost::mutex m_wait_files;
+    boost::mutex m_wait_fill_filles_or_stop_thread;
+    boost::condition m_wait_condition;
+    bool m_is_run_threads;
+    int  m_file_counter;
 
-        if (m_message_index < 10)
-        {
-            file_name << "00";
-        }
-        else if (m_message_index < 100)
-        {
-            file_name << "0";
-        }
-
-        file_name << m_message_index << ".txt";
-
-        return file_name.str();
-    }
-
-private:
-    const int m_message_index;
+    static const int ms_count_thread    = 4;
+    static const int ms_sleep_thread_time = 1;
 };
 
-typedef vector<cProcessorMessage> tProcessorMessages;
+
 
 int main()
 {
-    boost::thread_group group_of_slave_threads;
+    cProcessorMessage processor(Constants::count_files);
+//     cProcessorMessage processor;
+//     for( int i = 1; i <= Constants::count_files; ++i )
+//     {
+//         processor.addFileIndex(i);
+//     }
 
-    tProcessorMessages processor_messages;
-    processor_messages.reserve(Constants::count_files);
-
-    for( size_t i = 1; i <= Constants::count_files; ++i )
-    {
-        processor_messages.emplace_back(i);
-        group_of_slave_threads.create_thread( boost::bind( &cProcessorMessage::process, &processor_messages[i - 1] ) );
-    }
-
-    group_of_slave_threads.join_all();
+    processor.stopAndWaitThread();
 
     return 0;
 }

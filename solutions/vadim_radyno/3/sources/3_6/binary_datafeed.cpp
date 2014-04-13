@@ -2,6 +2,7 @@
 #include <boost/thread.hpp>
 #include <queue>
 #include <set>
+#include <boost/thread/condition.hpp>
 
 using namespace std;
 
@@ -31,7 +32,7 @@ public:
 
     ~cMessageProcessor()
     {
-        clear();
+        stopAndWaitThread();
     }
 
     void processMessage( std::ifstream& _in )
@@ -40,9 +41,6 @@ public:
         {
             boost::mutex::scoped_lock lock_messages(m_wait_messages);
             m_messages.push(make_shared<binary_reader::stock_data>(_in));
-        }
-        catch (const char* )
-        {
         }
         catch (...)
         {
@@ -66,6 +64,19 @@ public:
     }
 
 private:
+    void wait()
+    {
+        boost::mutex::scoped_lock lock( m_wait_messages );
+        while ( m_messages.empty())
+        {
+            if (!m_run_threads)
+            {
+                return;
+            }
+            m_wait_condition.wait( lock );
+        }
+    }
+
     void write()
     {
         while (true)
@@ -104,6 +115,7 @@ private:
             else if(m_run_threads)
             {
                 lock_messages.unlock();
+                //wait();
                 boost::this_thread::sleep(boost::posix_time::microsec(ms_sleep_thread_time));
             }
             else
@@ -116,10 +128,12 @@ private:
 private:
     tMessages           m_messages;
     boost::mutex        m_wait_messages;
+    boost::mutex        m_wait_files;
+    boost::mutex        m_wait_fill_message_or_stop;
     bool                m_run_threads;
     boost::thread_group m_group_of_slave_threads;
-    boost::mutex        m_wait_files;
     tFiles              m_files;
+    boost::condition    m_wait_condition;
 
     static const int    ms_count_threads     = 4;
     static const int    ms_sleep_thread_time = 1;
@@ -142,8 +156,8 @@ int main()
     }
     input_file.close();
 
-    message_processor.stopAndWaitThread();
-    message_processor.clear();
+//     message_processor.stopAndWaitThread();
+//     message_processor.clear();
 
     return 0;
 }

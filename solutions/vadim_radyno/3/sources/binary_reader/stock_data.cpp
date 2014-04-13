@@ -14,7 +14,7 @@ binary_reader::stock_data::stock_data( std::ifstream& _in )
     readArray<char>(_in, m_date_time_, ms_data_time_size);
     if (_in.eof())
     {
-        throw "empty file";
+        throw std::exception("empty file");
     }
     m_price_ = readValue<double>(_in);
     m_vwap_ = readValue<double>(_in);

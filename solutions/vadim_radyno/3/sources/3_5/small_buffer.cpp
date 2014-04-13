@@ -16,8 +16,8 @@ namespace Constants
 {
     namespace Paths
     {
-        const string input_file_test = BINARY_DIR "/input.txt";
-        const string input_file = BINARY_DIR "/input_";
+        //const string input_file_test = BINARY_DIR "/input.txt";
+        const string begin_input_file_name = BINARY_DIR "/input_";
         const string output_file = BINARY_DIR "/output.txt";
     }
 
@@ -41,6 +41,20 @@ struct sMessagesAttributies
 typedef boost::uint32_t tTypeMessage;
 typedef map<tTypeMessage, sMessagesAttributies> tAttributies;
 
+
+string getPathToFileByIndex(const string& _begin_path, const int _index)
+{
+    static const int index_size = 4;
+    std::stringstream file_name;
+    file_name << _begin_path;
+
+    std::string input, output;
+    char index_str[index_size];
+    sprintf_s( index_str, index_size, "%03d", _index );
+    file_name << index_str << ".txt";
+
+    return file_name.str() ; 
+}
 
 class cMessagesReader final
 {
@@ -75,7 +89,7 @@ public:
 private:
     void readMessage(const int _message_index)
     {
-        const string& path_to_message = getPathToFileByIndex(_message_index);
+        const string& path_to_message = getPathToFileByIndex(Constants::Paths::begin_input_file_name, _message_index);
 
         std::ifstream input_file(path_to_message, std::ios::in | ios::binary);
 
@@ -108,25 +122,6 @@ private:
         }
 
         input_file.close();
-    }
-
-    string getPathToFileByIndex(const int _message_index)
-    {
-        std::stringstream file_name;
-        file_name << Constants::Paths::input_file;
-
-        if (_message_index < 10)
-        {
-            file_name << "00";
-        }
-        else if (_message_index < 100)
-        {
-            file_name << "0";
-        }
-
-        file_name << _message_index << ".txt";
-
-        return file_name.str();
     }
 
 private:
