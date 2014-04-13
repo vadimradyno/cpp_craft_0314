@@ -16,13 +16,14 @@ namespace task4_5
 		int get_max() const;
 
     private:
-        void find_min_max();
+        void findMinMax();
         int getFirstValueFromData() const;
 
     private:
         data_type m_data;
         int m_max;
         int m_min;
+        int m_data_counter;
         boost::mutex m_wait_data;
         boost::mutex m_wait_min_max;
 

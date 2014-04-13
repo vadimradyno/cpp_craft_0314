@@ -5,12 +5,11 @@ task4_5::solution::solution( const data_type& data )
     , m_max(getFirstValueFromData())
     , m_min(m_max)
 {
-    
     boost::thread_group group_of_slave_threads;
     int counter_thread = ms_count_thread;
     while(counter_thread--)
     {
-        group_of_slave_threads.create_thread(boost::bind( &solution::find_min_max, this));
+        group_of_slave_threads.create_thread(boost::bind( &solution::findMinMax, this));
     }
 
     group_of_slave_threads.join_all();
@@ -40,7 +39,7 @@ int task4_5::solution::getFirstValueFromData() const
 }
 
 
-void task4_5::solution::find_min_max()
+void task4_5::solution::findMinMax()
 {
     while (true)
     {
