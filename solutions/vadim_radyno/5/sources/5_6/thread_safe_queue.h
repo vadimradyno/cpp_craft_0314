@@ -2,6 +2,8 @@
 #define _TASK5_6_THREAD_SAFE_QUEUE_H_
 
 #include <cstdlib>
+#include <queue>
+#include <boost/thread.hpp>
 
 namespace task5_6
 {
@@ -17,6 +19,9 @@ namespace task5_6
 
 		bool empty() const;
 		size_t size() const;
+    private:
+        std::queue<T>   m_queue;
+        mutable boost::mutex    m_wait_queue;
 	};
 
 	template< typename T >
@@ -30,26 +35,39 @@ namespace task5_6
 	}
 
 	template< typename T >
-	void thread_safe_queue< T >::push( const T&  )
+	void thread_safe_queue< T >::push( const T& new_element )
 	{
+        boost::mutex::scoped_lock queue_lock(m_wait_queue);
+        m_queue.push(new_element);
 	}
 
 	template< typename T >
-	bool thread_safe_queue< T >::pop( T& )
+	bool thread_safe_queue< T >::pop( T& result)
 	{
+        boost::mutex::scoped_lock queue_lock(m_wait_queue);
+        if (m_queue.empty())
+        {
+            return false;
+        }
+
+        result = m_queue.back();
+        m_queue.pop();
+
 		return true;
 	}
 
 	template< typename T >
 	bool thread_safe_queue< T >::empty() const
 	{
-		return false;
+        boost::mutex::scoped_lock queue_lock(m_wait_queue);
+		return m_queue.empty();
 	}
 
 	template< typename T >
 	size_t thread_safe_queue< T >::size() const
 	{
-		return 0ul;
+        boost::mutex::scoped_lock queue_lock(m_wait_queue);
+		return m_queue.size();
 	}
 
 }
