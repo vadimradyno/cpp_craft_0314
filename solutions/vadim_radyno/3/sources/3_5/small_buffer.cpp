@@ -16,7 +16,6 @@ namespace Constants
 {
     namespace Paths
     {
-        //const string input_file_test = BINARY_DIR "/input.txt";
         const string begin_input_file_name = BINARY_DIR "/input_";
         const string output_file = BINARY_DIR "/output.txt";
     }
@@ -59,6 +58,7 @@ string getPathToFileByIndex(const string& _begin_path, const int _index)
 class cMessagesReader final
 {
 public:
+    explicit cMessagesReader(){}
     void readMessages()
     {
         boost::thread_group group_of_slave_threads;
@@ -87,6 +87,9 @@ public:
     }
 
 private:
+    cMessagesReader(cMessagesReader&);
+    cMessagesReader operator=(cMessagesReader&);
+
     void readMessage(const int _message_index)
     {
         const string& path_to_message = getPathToFileByIndex(Constants::Paths::begin_input_file_name, _message_index);

@@ -31,9 +31,7 @@ namespace task5_4
     template< bool delete_first, typename Container >
     void clear_container( Container& _container)
     {
-        typedef std::unique_ptr< cDeleteFirst<delete_first, Container> > tDeleteFirstPtr;
-
-        tDeleteFirstPtr delete_first(new cDeleteFirst<delete_first, Container>( _container ));
+        cDeleteFirst<delete_first, Container> delete_first( _container );
        _container.clear();
     }
 
@@ -90,8 +88,7 @@ namespace task5_4
     template< bool delete_first, bool delete_second, typename Container >
     void clear_container( Container& _container)
     {
-        typedef std::unique_ptr< cDeleteFirstAndSecond<delete_first, delete_second, Container> > tDeleteFirstAndSecondPtr;
-        tDeleteFirstAndSecondPtr deleteFirstAndSecond(new cDeleteFirstAndSecond<delete_first, delete_second, Container>(_container));
+        cDeleteFirstAndSecond<delete_first, delete_second, Container> delete_first_and_second(_container);
         _container.clear();
     }
 }

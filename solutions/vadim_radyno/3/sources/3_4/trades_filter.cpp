@@ -64,6 +64,9 @@ public:
     }
 
 private:
+    cProcessorMessage(cProcessorMessage&);
+    cProcessorMessage& operator=(cProcessorMessage&);
+
     void process()
     {
         while (true)
@@ -119,7 +122,6 @@ private:
     int  m_file_counter;
 
     static const int ms_count_thread    = 4;
-    static const int ms_sleep_thread_time = 1;
 };
 
 
@@ -127,12 +129,6 @@ private:
 int main()
 {
     cProcessorMessage processor(Constants::count_files);
-//     cProcessorMessage processor;
-//     for( int i = 1; i <= Constants::count_files; ++i )
-//     {
-//         processor.addFileIndex(i);
-//     }
-
     processor.stopAndWaitThread();
 
     return 0;

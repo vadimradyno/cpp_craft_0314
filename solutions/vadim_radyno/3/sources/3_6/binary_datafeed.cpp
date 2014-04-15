@@ -21,7 +21,7 @@ class cMessageProcessor final
     typedef map<string, std::ofstream> tFiles;
 
 public:
-    cMessageProcessor()
+    explicit cMessageProcessor()
         : m_run_threads(true)
     {
         for (int i = 0; i < ms_count_threads; ++i)
@@ -33,6 +33,7 @@ public:
     ~cMessageProcessor()
     {
         stopAndWaitThread();
+        closeFiles();
     }
 
     void processMessage( std::ifstream& _in )
@@ -41,6 +42,10 @@ public:
         {
             boost::mutex::scoped_lock lock_messages(m_wait_messages);
             m_messages.push(make_shared<binary_reader::stock_data>(_in));
+
+            lock_messages.unlock();
+            m_wait_condition.notify_all();
+
         }
         catch (...)
         {
@@ -48,40 +53,20 @@ public:
         }
     }
 
-    void stopAndWaitThread()
-    {
-        m_run_threads = false;
-        m_group_of_slave_threads.join_all();
-    }
-
-    void clear()
-    {
-        for (auto& file : m_files)
-        {
-            file.second.close();
-        }
-        m_files.clear();
-    }
-
 private:
-    void wait()
-    {
-        boost::mutex::scoped_lock lock( m_wait_messages );
-        while ( m_messages.empty())
-        {
-            if (!m_run_threads)
-            {
-                return;
-            }
-            m_wait_condition.wait( lock );
-        }
-    }
+    cMessageProcessor& operator=(const cMessageProcessor&);
+    cMessageProcessor(const cMessageProcessor&);
 
     void write()
     {
         while (true)
         {
-            boost::mutex::scoped_lock lock_messages(m_wait_messages);
+            boost::mutex::scoped_lock lock_messages( m_wait_messages );
+
+            m_wait_condition.wait( lock_messages, [this]()
+            {
+                return !m_messages.empty() || !m_run_threads;
+            });
 
             if (!m_messages.empty())
             {
@@ -112,17 +97,27 @@ private:
                 message->write( (*it).second );
 
             }
-            else if(m_run_threads)
-            {
-                lock_messages.unlock();
-                //wait();
-                boost::this_thread::sleep(boost::posix_time::microsec(ms_sleep_thread_time));
-            }
-            else
+            else if (!m_run_threads)
             {
                 return;
             }
         }
+    }
+
+    void stopAndWaitThread()
+    {
+        m_run_threads = false;
+        m_wait_condition.notify_all();
+        m_group_of_slave_threads.join_all();
+    }
+
+    void closeFiles()
+    {
+        for (auto& file : m_files)
+        {
+            file.second.close();
+        }
+        m_files.clear();
     }
 
 private:
@@ -138,6 +133,7 @@ private:
     static const int    ms_count_threads     = 4;
     static const int    ms_sleep_thread_time = 1;
 };
+
 
 int main()
 {
@@ -155,9 +151,6 @@ int main()
         message_processor.processMessage(input_file);
     }
     input_file.close();
-
-//     message_processor.stopAndWaitThread();
-//     message_processor.clear();
 
     return 0;
 }
