@@ -77,11 +77,10 @@ public:
 
         for (const auto& attr : m_attrs)
         {
-            output_file.write(reinterpret_cast<const char*>(&(attr.first)), sizeof(attr.first));
-
             const double mean = static_cast<double>(attr.second.m_count) / static_cast<double>(attr.second.m_seconds_and_message_size.size());
-            if (mean != 0)
+            if (mean != 0.0)
             {
+                output_file.write(reinterpret_cast<const char*>(&(attr.first)), sizeof(attr.first));
                 output_file.write(reinterpret_cast<const char*>(&(mean)), sizeof(mean));
             }
         }
