@@ -74,7 +74,7 @@ void binary_reader::stock_data::write( std::ofstream& out ) const
 }
 
 
-void binary_reader::stock_data::write_raw( std::ofstream& out )
+void binary_reader::stock_data::write_raw( std::ofstream& out ) const
 {	
 	// your code. Can be emty
 	// this method is used for testing. It writes data to the binary file without convertion.

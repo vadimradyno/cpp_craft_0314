@@ -107,6 +107,11 @@ private:
         {
             binary_reader::market_message message(input_file);
 
+            if (input_file.eof())
+            {
+                break;
+            }
+
             if (!message.isValidType())
             {
                 continue;
